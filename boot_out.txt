@@ -1,0 +1,1 @@
+Adafruit CircuitPython 4.0.0-alpha.2-91-ga0aba2b9c-dirty on 2018-11-04; Adafruit Trellis M4 Express with samd51g19
