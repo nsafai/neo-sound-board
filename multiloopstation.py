@@ -7,16 +7,9 @@ import audioio
 import adafruit_trellis_express
 import adafruit_adxl34x
 from wave_parsing import parse_wav
+import os
+import random
 
-#################### COLOR SETUP ####################
-# four colors for the 4 sounds, using 0 or 255 only will reduce buzz
-DRUM_COLOR = ((0, 255, 255),
-              (0, 255, 0),
-              (255, 255, 0),
-              (255, 0, 0) )
-              
-# the color for the sweeping ticker
-TICKER_COLOR = (255, 165, 0)
 
 ################### KEYPAD SETUP ####################
 # Init keypad with preset settings
@@ -26,16 +19,22 @@ trellis.pixels._neopixel.brightness = 0.1
 trellis.pixels._neopixel.fill(0)
 trellis.pixels._neopixel.show()
 
+
 #################### IMPORT SOUNDS ####################
-# Sounds must all:
-# - have the same sample rate and must
-# - be mono or stereo (no mix-n-match!)
-SOUNDS = ["voice01.wav", "voice02.wav", "voice03.wav", "voice04.wav"]
+# Sounds must all (1) have the same sample rate and (2) be mono or stereo (no mix-n-match!)
+SOUNDS = []
+# go through every file in /sounds directory
+for file in os.listdir("/sounds"):
+    # get all .wav files but ignore files that start with "."
+    if file.endswith(".wav") and not file.startswith("."):
+        # append those to SOUNDS
+        SOUNDS.append("/sounds/" + str(file))
+# print(SOUNDS)
 num_sounds = len(SOUNDS)
 
 # Parse the first file to figure out what format its in
 wave_format = parse_wav(SOUNDS[0])
-print('waveformat: ', wave_format)
+# print('waveformat: ', wave_format)
 
 # Audio playback object - we'll go with either mono or stereo depending on
 # what we see in the first file
@@ -50,28 +49,40 @@ mixer = audioio.Mixer(voice_count=num_sounds, sample_rate=wave_format['sample_ra
                         bits_per_sample=16, samples_signed=True)
 audio.play(mixer)
 
+
+#################### COLOR SETUP ####################
+DRUM_COLOR = []
+              
+# the color for the sweeping ticker
+TICKER_COLOR = (255, 165, 0)
+
+
 ############# ASSIGN COLORS/SOUNDS TO KEYS ###############
 samples = []
-# Read the 4 wave files, convert to stereo samples, and store
-# (show load status on neopixels and play audio once loaded too!)
-for v in range(num_sounds): # for every sound
-    for x in range(8):
-        # assign same sound to all LEDs in same row
-        trellis.pixels[(v, x)] = DRUM_COLOR[v]
-        wave_file = open(SOUNDS[v], "rb")
-    sample = audioio.WaveFile(wave_file)
-    # mixer.play(sample, voice=0)
-    while mixer.playing:
-        pass # let each sound finish playing before highlighting the other row
-    samples.append(sample)
+cur_idx = 0
+# leaving 16 buttons for sounds
+for col in range(8): # across 8 columns
+    for row in range(2): # across 2 rows
+        # generate a random color (TODO: make this smarter)
+        random_color = random.randint(cur_idx, 0xFFFFFF)
+        DRUM_COLOR.append(random_color) # append drum color
+        trellis.pixels[(row, col)] = DRUM_COLOR[cur_idx] # assign color on trellis
+        wave_file = open(SOUNDS[cur_idx], "rb") # open the corresponding wave file
+        sample = audioio.WaveFile(wave_file) # convert wave file
+        mixer.play(sample, voice=0) # play sample
+        # while mixer.playing:
+        #     pass # let each sound finish playing before highlighting the other row
+        samples.append(sample) # append to list of sound samples
+        cur_idx += 1 # iterate cur_idx
 # Clear all pixels
 trellis.pixels._neopixel.fill(0)
 trellis.pixels._neopixel.show()
 
+
 ################### SEQUENCER SETUP ####################
 tempo = 180  # Starting BPM
 playing = True
-current_step = 7 # we actually start on the last step since we increment first
+current_step = 15 # we actually start on the last step since we increment first
 # the starting state of the sequencer
 beatset = [[False] * 8, [False] * 8, [False] * 8, [False] * 8]
 current_press = set() # currently pressed buttons
@@ -80,30 +91,51 @@ current_press = set() # currently pressed buttons
 ################## TICKER FUNCTIONS ####################
 def redrawAfterTicker():
     # redraw the last step to remove the ticker (e.g. show what was there before ticker)
-    for y in range(4):
-        color = 0 # default value for color if pixel wasn't highlighted
-        if beatset[y][current_step]: # if pixel colored before ticket
-            color = DRUM_COLOR[y] # grab that color
-        trellis.pixels[(y, current_step)] = color # reset color to what it was before
+    if current_step < 8:
+      row = 3
+      col = current_step
+    else:
+      row = 2
+      col = current_step - 8
+    color = 0
+    # if beatset[y][current_step]: if pixel colored before ticker
+        # color = DRUM_COLOR[y] # grab that color
+    trellis.pixels[(row, col)] = color
+    print('turning off', row, 'col', col)
+    # for y in range(4):
+    #     color = 0 # default value for color if pixel wasn't highlighted
+    #     if beatset[y][current_step]: # if pixel colored before ticker
+    #         color = DRUM_COLOR[y] # grab that color
+    #     trellis.pixels[(y, current_step)] = color # reset color to what it was before
 
 def moveTicker():
-    # draw the vertical ticker bar, with selected voices highlighted
-    for y in range(4):
-        if beatset[y][current_step]:
-            r, g, b = DRUM_COLOR[y]
-            color = (r//2, g//2, b//2)  # this voice is enabled
-            #print("Playing: ", VOICES[y])
-            mixer.play(samples[y], voice=y)
-        else:
-            color = TICKER_COLOR     # no voice on
-        trellis.pixels[(y, current_step)] = color
+    # draw the ticker for every count, where loop_size = 16 counts
+    if current_step < 8:
+      row = 3
+      col = current_step
+    else:
+      row = 2
+      col = current_step - 8
+    # TODO: if there are sounds at ticker coordinate, show slightly different sound
+    print('turning on row', row, 'col', col)
+    trellis.pixels[(row, col)] = TICKER_COLOR
+    # mixer.play(samples_at_index)
+    # for y in range(4):
+    #     if beatset[y][current_step]:
+    #         r, g, b = DRUM_COLOR[y]
+    #         color = (r//2, g//2, b//2)  # this voice is enabled
+    #         #print("Playing: ", VOICES[y])
+    #         mixer.play(samples[y], voice=y)
+    #     else:
+    #         color = TICKER_COLOR     # no voice on
+    #     trellis.pixels[(y, current_step)] = color
 
 
 ##################### PLAY LOOP ########################
 while playing == True:
     stamp = time.monotonic() # stamp represents time at beginning of loop
     redrawAfterTicker() # redraw pixels as they appeared before ticker
-    current_step = (current_step + 1) % 8 # next beat!
+    current_step = (current_step + 1) % 16 # next beat!
     moveTicker() # move yellow ticker
     # handle button presses while we're waiting for the next tempo beat
     while time.monotonic() - stamp < 60/tempo:
