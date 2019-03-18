@@ -22,6 +22,7 @@ DRUM_COLOR = ((0, 255, 255),
               (0, 255, 0),
               (255, 255, 0),
               (255, 0, 0) )
+
 # the color for the sweeping ticker
 TICKER_COLOR = (255, 255, 255)
 
@@ -31,39 +32,6 @@ trellis = adafruit_trellis_express.TrellisM4Express(rotation=90)
 # Our accelerometer
 i2c = busio.I2C(board.ACCELEROMETER_SCL, board.ACCELEROMETER_SDA)
 accelerometer = adafruit_adxl34x.ADXL345(i2c)
-
-def wheel(pos): # Input a value 0 to 255 to get a color value.
-    if pos < 0 or pos > 255:
-        return (0, 0, 0)
-    elif pos < 85:
-        return(int(pos * 3), int(255 - pos*3), 0)
-    elif pos < 170:
-        pos -= 85
-        return(int(255 - pos*3), 0, int(pos * 3))
-    else:
-        pos -= 170
-        return(0, int(pos * 3), int(255 - pos*3))
-
-# welcome function
-try:
-    j = 0
-    trellis.pixels._neopixel.brightness = 0.1
-    for i in range(32):
-        pixel_index = (i * 256 // 32) + j
-        trellis.pixels._neopixel[i] = wheel(pixel_index & 255)
-    trellis.pixels._neopixel.show()
-    j = (j+1) % 256
-    time.sleep(0.005)
-    # Clear all pixels
-    trellis.pixels._neopixel.fill(0)
-    trellis.pixels._neopixel.show()
-    trellis.pixels._neopixel.brightness = 0.25
-    # just hold a moment
-    time.sleep(0.5)
-except OSError:
-    # no biggie, they probably deleted it
-    pass
-        
 
 # Parse the first file to figure out what format its in
 wave_format = parse_wav(VOICES[0])
@@ -86,19 +54,13 @@ samples = []
 # Read the 4 wave files, convert to stereo samples, and store
 # (show load status on neopixels and play audio once loaded too!)
 for v in range(4):
-    trellis.pixels[(v, 0)] = DRUM_COLOR[v]
-    wave_file = open(VOICES[v], "rb")
-    # OK we managed to open the wave OK
-    for x in range(1,4):
+    for x in range (8):
         trellis.pixels[(v, x)] = DRUM_COLOR[v]
+        wave_file = open(VOICES[v], "rb")
     sample = audioio.WaveFile(wave_file)
-    # debug play back on load!
     mixer.play(sample, voice=0)
-    for x in range(4,7):
-        trellis.pixels[(v, x)] = DRUM_COLOR[v]
     while mixer.playing:
-        pass
-    trellis.pixels[(v, 7)] = DRUM_COLOR[v]
+        pass # let each sound finish playing before highlighting the other row
     samples.append(sample)
 
 # Clear all pixels
