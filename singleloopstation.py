@@ -28,6 +28,7 @@ TICKER_COLOR = (255, 255, 255)
 
 # Our keypad + neopixel driver
 trellis = adafruit_trellis_express.TrellisM4Express(rotation=90)
+trellis.pixels._neopixel.brightness = 0.1
 
 # Our accelerometer
 i2c = busio.I2C(board.ACCELEROMETER_SCL, board.ACCELEROMETER_SDA)

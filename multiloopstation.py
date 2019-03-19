@@ -14,7 +14,7 @@ import random
 ################### KEYPAD SETUP ####################
 # Init keypad with preset settings
 trellis = adafruit_trellis_express.TrellisM4Express(rotation=90) # Our keypad + neopixel driver
-trellis.pixels._neopixel.brightness = 0.1
+trellis.pixels._neopixel.brightness = 0.05
 # Clear all pixels
 trellis.pixels._neopixel.fill(0)
 trellis.pixels._neopixel.show()
@@ -56,6 +56,12 @@ DRUM_COLOR = []
 # the color for the sweeping ticker
 TICKER_COLOR = (255, 165, 0)
 
+################### SEQUENCER SETUP ####################
+tempo = 180  # Starting BPM
+playing = True
+current_step = 15 # we actually start on the last step since we increment first
+current_press = set() # currently pressed buttons
+sequencer = [] # will keep track of all instrument loops
 
 ############# ASSIGN COLORS/SOUNDS TO KEYS ###############
 samples = []
@@ -69,66 +75,42 @@ for col in range(8): # across 8 columns
         trellis.pixels[(row, col)] = DRUM_COLOR[cur_idx] # assign color on trellis
         wave_file = open(SOUNDS[cur_idx], "rb") # open the corresponding wave file
         sample = audioio.WaveFile(wave_file) # convert wave file
-        mixer.play(sample, voice=0) # play sample
+        # mixer.play(sample, voice=0) # play random sample
         # while mixer.playing:
         #     pass # let each sound finish playing before highlighting the other row
         samples.append(sample) # append to list of sound samples
+        sequencer.append([False] * 16) # starting state of sequencer for all instruments
         cur_idx += 1 # iterate cur_idx
-# Clear all pixels
-trellis.pixels._neopixel.fill(0)
-trellis.pixels._neopixel.show()
-
-
-################### SEQUENCER SETUP ####################
-tempo = 180  # Starting BPM
-playing = True
-current_step = 15 # we actually start on the last step since we increment first
-# the starting state of the sequencer
-beatset = [[False] * 8, [False] * 8, [False] * 8, [False] * 8]
-current_press = set() # currently pressed buttons
+mixer.play(random.choice(samples), voice=0) # play random sample
+print(sequencer)
 
 
 ################## TICKER FUNCTIONS ####################
 def redrawAfterTicker():
     # redraw the last step to remove the ticker (e.g. show what was there before ticker)
-    if current_step < 8:
-      row = 3
-      col = current_step
-    else:
-      row = 2
-      col = current_step - 8
+    # row is 3 (top row) for first 8 counts, then 2 (second row)
+    row = 3 if current_step < 8 else 2
+    # current_step (0-15) but col can only be equal to 0-7
+    col = current_step if current_step < 8 else (current_step - 8)
     color = 0
-    # if beatset[y][current_step]: if pixel colored before ticker
+    # TODO: if beatset[y][current_step]: # if pixel colored before ticker
         # color = DRUM_COLOR[y] # grab that color
     trellis.pixels[(row, col)] = color
-    print('turning off', row, 'col', col)
-    # for y in range(4):
-    #     color = 0 # default value for color if pixel wasn't highlighted
-    #     if beatset[y][current_step]: # if pixel colored before ticker
-    #         color = DRUM_COLOR[y] # grab that color
-    #     trellis.pixels[(y, current_step)] = color # reset color to what it was before
 
 def moveTicker():
     # draw the ticker for every count, where loop_size = 16 counts
-    if current_step < 8:
-      row = 3
-      col = current_step
-    else:
-      row = 2
-      col = current_step - 8
-    # TODO: if there are sounds at ticker coordinate, show slightly different sound
-    print('turning on row', row, 'col', col)
+    # row is 3 (top row) for first 8 counts, then 2 (second row)
+    row = 3 if current_step < 8 else 2
+    # current_step (0-15) but col can only be equal to 0-7
+    col = current_step if current_step < 8 else (current_step - 8)
+    # TODO: if there are sounds at ticker coordinate, show slightly different color
+    # TODO: if there are sounds at ticker coordinate, play those sounds 
+        #     if beatset[y][current_step]:
+        #         r, g, b = DRUM_COLOR[y]
+        #         color = (r//2, g//2, b//2)  # this voice is enabled
+        #         #print("Playing: ", VOICES[y])
+        #         mixer.play(samples[y], voice=y)
     trellis.pixels[(row, col)] = TICKER_COLOR
-    # mixer.play(samples_at_index)
-    # for y in range(4):
-    #     if beatset[y][current_step]:
-    #         r, g, b = DRUM_COLOR[y]
-    #         color = (r//2, g//2, b//2)  # this voice is enabled
-    #         #print("Playing: ", VOICES[y])
-    #         mixer.play(samples[y], voice=y)
-    #     else:
-    #         color = TICKER_COLOR     # no voice on
-    #     trellis.pixels[(y, current_step)] = color
 
 
 ##################### PLAY LOOP ########################
@@ -141,16 +123,20 @@ while playing == True:
     while time.monotonic() - stamp < 60/tempo:
         # grab currently pressed buttons
         pressed = set(trellis.pressed_keys) 
-        # for every button pressed:
+        # for every button pressed in last beat:
         for down in pressed - current_press:
             print("Pressed down", down)
             y, x = down[0], down[1] # unwrap coordinates of each pressed button
+            instr_index = (x * 2) + y
+            print('instrument index:', instr_index)
+            print('sample at intr_index:', samples[instr_index])
+            mixer.play(samples[instr_index], voice=0) # play sound of button pressed
             # toggle sound of pressed button (i.e. if it was previously enabled -> disable)
-            beatset[y][x] = not beatset[y][x]
-            if beatset[y][x]: # if sound was just enabled
-                color = DRUM_COLOR[y] # grab appropriate color
-            else: # if sound was just disabled
-                color = 0 # set color to 0 to turn off the pixel
-            trellis.pixels[down] = color # change color on the board
+            # beatset[y][x] = not beatset[y][x]
+            # if beatset[y][x]: # if sound was just enabled
+                # color = DRUM_COLOR[y] # grab appropriate color
+            # else: # if sound was just disabled
+            #     color = 0 # set color to 0 to turn off the pixel
+            # trellis.pixels[down] = color # change color on the board
         current_press = pressed # update current_press
 
