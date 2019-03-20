@@ -30,7 +30,10 @@ def get_instr_index(row, col):
 
 def get_loop_index(row, col):
     # returns index of button pushed on sequencer rows
-    return col * NUM_SEQ_ROWS - SEQUENCER_ROWS[0] + row
+    if row == SEQUENCER_ROWS[-1]: # if top row
+        return col
+    else: # if bottom row
+        return col + 8 # bottom row starts at loop index 8
 
 
 #################### IMPORT SOUNDS ####################
@@ -89,41 +92,39 @@ for col in range(8): # across 8 columns
         trellis.pixels[(row, col)] = DRUM_COLOR[cur_idx] # assign color on trellis
         wave_file = open(SOUNDS[cur_idx], "rb") # open the corresponding wave file
         sample = audioio.WaveFile(wave_file) # convert wave file
-        # mixer.play(sample, voice=0) # play random sample
-        # while mixer.playing:
-        #     pass # let each sound finish playing before highlighting the other row
         samples.append(sample) # append to list of sound samples
         sequencer.append([False] * 16) # starting state of sequencer for all instruments
         cur_idx += 1 # iterate cur_idx
-mixer.play(random.choice(samples), voice=0) # play random sample
+random_sample = random.choice(samples)
+mixer.play(random_sample, voice=0) # play random sample
 
 
 ################## TICKER FUNCTIONS ####################
 def redraw_after_ticker():
     # redraw the last step to remove the ticker (e.g. show what was there before ticker)
-    # row is 3 (top row) for first 8 counts, then 2 (second row)
+    # row is 3 for for first 8 counts, then 2 for 9-16
     row = 3 if current_step < 8 else 2
-    # current_step (0-15) but col can only be equal to 0-7
+    # current_step ranges from 0-15 but col can only be equal to 0-7, so we subtract 8
     col = current_step if current_step < 8 else (current_step - 8)
-    color = 0
-    # TODO: if beatset[y][current_step]: # if pixel colored before ticker
-        # color = DRUM_COLOR[y] # grab that color
+    color = 0 # color is black by default
+    if sequencer[instr_idx][current_step]: # if pixel colored before ticker
+        color = DRUM_COLOR[instr_idx] # restore that color after ticket moves
     trellis.pixels[(row, col)] = color
 
 def move_ticker():
     # draw the ticker for every count, where loop_size = 16 counts
-    # row is 3 (top row) for first 8 counts, then 2 (second row)
+    # row is 3 for for first 8 counts, then 2 for 9-16
     row = 3 if current_step < 8 else 2
-    # current_step (0-15) but col can only be equal to 0-7
+    # current_step ranges from 0-15 but col can only be equal to 0-7, so we subtract 8
     col = current_step if current_step < 8 else (current_step - 8)
-    # TODO: if there are sounds at ticker coordinate, show slightly different color
-    # TODO: if there are sounds at ticker coordinate, play those sounds 
-        #     if beatset[y][current_step]:
-        #         r, g, b = DRUM_COLOR[y]
-        #         color = (r//2, g//2, b//2)  # this voice is enabled
-        #         #print("Playing: ", VOICES[y])
-        #         mixer.play(samples[y], voice=y)
-    trellis.pixels[(row, col)] = TICKER_COLOR
+    color = TICKER_COLOR # default ticker color
+    # if instrument is supposed to play at current_step:
+    for i in range(len(sequencer)): # for every instrument in sequencer
+        if sequencer[i][current_step]: # if instrument enabled at that step
+            color = DRUM_COLOR[i] // 2 # show a slightly different ticker color
+            print('that instrument is supposed to be played rn')
+            mixer.play(samples[i], voice=i) # play the instrument's sound
+    trellis.pixels[(row, col)] = color # light up the pixel
 
 
 ##################### PLAY LOOP ########################
@@ -143,14 +144,14 @@ while playing == True:
             if row in INSTR_ROWS:
                 instr_idx = get_instr_index(row, col)
                 print('pressed down instrument number:', instr_idx)
-                # play sound of button pressed
-                mixer.play(samples[instr_idx], voice=0) 
+                # TODO: show all indexes where instrument appears
+                mixer.play(samples[instr_idx], voice=instr_idx) # play sound of button pressed
             elif row in SEQUENCER_ROWS:
                 loop_idx = get_loop_index(row, col)
                 print('adding instrument number', instr_idx, 'to loop index:', loop_idx)
                 # toggle instrument at loop_idx 
                 # e.g. if it was previously enabled -> disable & vice-versa
-                sequencer[instr_idx][loop_idx] = not sequencer[instr_idx][loop_idx]
+                sequencer[instr_idx][loop_idx] = not sequencer[loop_idx][instr_idx]
                 if sequencer[instr_idx][loop_idx]: # if sound was just enabled
                     color = DRUM_COLOR[instr_idx] # grab instrument's color
                 else: # if sound was just disabled
