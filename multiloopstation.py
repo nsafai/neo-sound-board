@@ -142,13 +142,22 @@ while playing == True:
             # print("Pressed down", btn)
             row, col = btn[0], btn[1] # unwrap coordinates of pressed button
             if row in INSTR_ROWS:
-                instr_idx = get_instr_index(row, col)
-                print('pressed down instrument number:', instr_idx)
-                # TODO: show all indexes where instrument appears
+                instr_idx = get_instr_index(row, col) # get instrument from button coordinates
                 mixer.play(samples[instr_idx], voice=instr_idx) # play sound of button pressed
+                # light up button at all indexes where instrument appears
+                for step, status in enumerate(sequencer[instr_idx]):
+                    print(step, status)
+                    # top row (row 3) for first 8 counts, second row after
+                    row = 3 if step < 8 else 2
+                    # step ranges from 0-15 but col can only be equal to 0-7, so we subtract 8
+                    col = step if step < 8 else step - 8
+                    color = 0 # default color
+                    if status: # if instrument enabled at that count/step
+                        print('instrument is enabled at index', step)
+                        color = DRUM_COLOR[instr_idx] # set color to instrument color
+                    trellis.pixels[(row, col)] = color
             elif row in SEQUENCER_ROWS:
-                loop_idx = get_loop_index(row, col)
-                print('adding instrument number', instr_idx, 'to loop index:', loop_idx)
+                loop_idx = get_loop_index(row, col) # get loop index from button coordinates
                 # toggle instrument at loop_idx 
                 # e.g. if it was previously enabled -> disable & vice-versa
                 sequencer[instr_idx][loop_idx] ^= True
