@@ -29,7 +29,8 @@ def get_instr_index(row, col):
     return col * NUM_INSTR_ROWS + row
 
 def get_loop_index(row, col):
-    return col * NUM_SEQ_ROWS + row
+    # returns index of button pushed on sequencer rows
+    return col * NUM_SEQ_ROWS - 2 + row
 
 
 #################### IMPORT SOUNDS ####################
