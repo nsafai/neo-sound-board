@@ -93,7 +93,7 @@ for col in range(8): # across 8 columns
         wave_file = open(SOUNDS[cur_idx], "rb") # open the corresponding wave file
         sample = audioio.WaveFile(wave_file) # convert wave file
         samples.append(sample) # append to list of sound samples
-        sequencer.append([False] * 16) # starting state of sequencer for all instruments
+        sequencer.append([0] * 16) # starting state of sequencer for all instruments
         cur_idx += 1 # iterate cur_idx
 random_sample = random.choice(samples)
 mixer.play(random_sample) # play random sample
@@ -102,7 +102,7 @@ mixer.play(random_sample) # play random sample
 ################## TICKER FUNCTIONS ####################
 def redraw_after_ticker():
     # redraw the last step to remove the ticker (e.g. show what was there before ticker)
-    # row is 3 for for first 8 counts, then 2 for 9-16
+    # row is 3 (top row) for for first 8 counts, then 2 (second row) for counts 9-16
     row = 3 if current_step < 8 else 2
     # current_step ranges from 0-15 but col can only be equal to 0-7, so we subtract 8
     col = current_step if current_step < 8 else (current_step - 8)
@@ -151,7 +151,7 @@ while playing == True:
                 print('adding instrument number', instr_idx, 'to loop index:', loop_idx)
                 # toggle instrument at loop_idx 
                 # e.g. if it was previously enabled -> disable & vice-versa
-                sequencer[instr_idx][loop_idx] = not sequencer[loop_idx][instr_idx]
+                sequencer[instr_idx][loop_idx] ^= True
                 if sequencer[instr_idx][loop_idx]: # if sound was just enabled
                     color = DRUM_COLOR[instr_idx] # grab instrument's color
                 else: # if sound was just disabled
