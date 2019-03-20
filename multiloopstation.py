@@ -96,7 +96,7 @@ for col in range(8): # across 8 columns
         sequencer.append([False] * 16) # starting state of sequencer for all instruments
         cur_idx += 1 # iterate cur_idx
 random_sample = random.choice(samples)
-mixer.play(random_sample, voice=0) # play random sample
+mixer.play(random_sample) # play random sample
 
 
 ################## TICKER FUNCTIONS ####################
@@ -119,7 +119,7 @@ def move_ticker():
     col = current_step if current_step < 8 else (current_step - 8)
     color = TICKER_COLOR # default ticker color
     # if instrument is supposed to play at current_step:
-    for i in range(len(sequencer)): # for every instrument in sequencer
+    for i in range(len(sequencer)): # for every instrument index in sequencer
         if sequencer[i][current_step]: # if instrument enabled at that step
             color = DRUM_COLOR[i] // 2 # show a slightly different ticker color
             print('that instrument is supposed to be played rn')
