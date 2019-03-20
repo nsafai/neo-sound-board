@@ -25,12 +25,12 @@ NUM_SEQ_ROWS = len(SEQUENCER_ROWS)
 instr_idx = 0 # default to first instrument
 
 def get_instr_index(row, col): 
-    # use this fn to get index of button from their (col, row) coordinates
-    return col * NUM_INSTR_ROWS + row
+    # returns index of instrument pressed
+    return col * NUM_INSTR_ROWS - INSTR_ROWS[0] + row
 
 def get_loop_index(row, col):
     # returns index of button pushed on sequencer rows
-    return col * NUM_SEQ_ROWS - 2 + row
+    return col * NUM_SEQ_ROWS - SEQUENCER_ROWS[0] + row
 
 
 #################### IMPORT SOUNDS ####################
@@ -68,12 +68,14 @@ DRUM_COLOR = []
 # the color for the sweeping ticker
 TICKER_COLOR = (255, 165, 0)
 
+
 ################### SEQUENCER SETUP ####################
 tempo = 180  # Starting BPM
 playing = True
 current_step = 15 # we actually start on the last step since we increment first
 current_press = set() # currently pressed buttons
 sequencer = [] # will keep track of all instrument loops
+
 
 ############# ASSIGN COLORS/SOUNDS TO KEYS ###############
 samples = []
@@ -136,22 +138,23 @@ while playing == True:
         pressed = set(trellis.pressed_keys) 
         # for every button pressed in last beat:
         for btn in pressed - current_press:
-            print("Pressed down", btn)
+            # print("Pressed down", btn)
             row, col = btn[0], btn[1] # unwrap coordinates of pressed button
             if row in INSTR_ROWS:
                 instr_idx = get_instr_index(row, col)
-                print('instrument index:', instr_idx)
+                print('pressed down instrument number:', instr_idx)
                 # play sound of button pressed
                 mixer.play(samples[instr_idx], voice=0) 
             elif row in SEQUENCER_ROWS:
                 loop_idx = get_loop_index(row, col)
-                print('want to add instrument:', instr_idx, 'at loop index:', loop_idx)
-            # toggle sound of pressed button (i.e. if it was previously enabled -> disable)
-            # beatset[y][x] = not beatset[y][x]
-            # if beatset[y][x]: # if sound was just enabled
-                # color = DRUM_COLOR[y] # grab appropriate color
-            # else: # if sound was just disabled
-            #     color = 0 # set color to 0 to turn off the pixel
-            # trellis.pixels[btn] = color # change color on the board
+                print('adding instrument number', instr_idx, 'to loop index:', loop_idx)
+                # toggle instrument at loop_idx 
+                # e.g. if it was previously enabled -> disable & vice-versa
+                sequencer[instr_idx][loop_idx] = not sequencer[instr_idx][loop_idx]
+                if sequencer[instr_idx][loop_idx]: # if sound was just enabled
+                    color = DRUM_COLOR[instr_idx] # grab instrument's color
+                else: # if sound was just disabled
+                    color = 0 # set color to 0 to turn off the pixel
+                trellis.pixels[(row, col)] = color # change color on the board
         current_press = pressed # update current_press
 
