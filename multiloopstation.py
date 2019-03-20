@@ -18,6 +18,18 @@ trellis.pixels._neopixel.brightness = 0.05
 # Clear all pixels
 trellis.pixels._neopixel.fill(0)
 trellis.pixels._neopixel.show()
+INSTR_ROWS = [0, 1] # we'll use bottom 2 rows for insruments
+NUM_INSTR_ROWS = len(INSTR_ROWS) # useful for matrixes with >8x4 buttons
+SEQUENCER_ROWS = [2, 3] # we'll use top 2 rows for insruments
+NUM_SEQ_ROWS = len(SEQUENCER_ROWS)
+instr_idx = 0 # default to first instrument
+
+def get_instr_index(row, col): 
+    # use this fn to get index of button from their (col, row) coordinates
+    return col * NUM_INSTR_ROWS + row
+
+def get_loop_index(row, col):
+    return col * NUM_SEQ_ROWS + row
 
 
 #################### IMPORT SOUNDS ####################
@@ -51,8 +63,7 @@ audio.play(mixer)
 
 
 #################### COLOR SETUP ####################
-DRUM_COLOR = []
-              
+DRUM_COLOR = []            
 # the color for the sweeping ticker
 TICKER_COLOR = (255, 165, 0)
 
@@ -82,11 +93,10 @@ for col in range(8): # across 8 columns
         sequencer.append([False] * 16) # starting state of sequencer for all instruments
         cur_idx += 1 # iterate cur_idx
 mixer.play(random.choice(samples), voice=0) # play random sample
-print(sequencer)
 
 
 ################## TICKER FUNCTIONS ####################
-def redrawAfterTicker():
+def redraw_after_ticker():
     # redraw the last step to remove the ticker (e.g. show what was there before ticker)
     # row is 3 (top row) for first 8 counts, then 2 (second row)
     row = 3 if current_step < 8 else 2
@@ -97,7 +107,7 @@ def redrawAfterTicker():
         # color = DRUM_COLOR[y] # grab that color
     trellis.pixels[(row, col)] = color
 
-def moveTicker():
+def move_ticker():
     # draw the ticker for every count, where loop_size = 16 counts
     # row is 3 (top row) for first 8 counts, then 2 (second row)
     row = 3 if current_step < 8 else 2
@@ -116,27 +126,31 @@ def moveTicker():
 ##################### PLAY LOOP ########################
 while playing == True:
     stamp = time.monotonic() # stamp represents time at beginning of loop
-    redrawAfterTicker() # redraw pixels as they appeared before ticker
+    redraw_after_ticker() # redraw pixels as they appeared before ticker
     current_step = (current_step + 1) % 16 # next beat!
-    moveTicker() # move yellow ticker
+    move_ticker() # move yellow ticker
     # handle button presses while we're waiting for the next tempo beat
     while time.monotonic() - stamp < 60/tempo:
         # grab currently pressed buttons
         pressed = set(trellis.pressed_keys) 
         # for every button pressed in last beat:
-        for down in pressed - current_press:
-            print("Pressed down", down)
-            y, x = down[0], down[1] # unwrap coordinates of each pressed button
-            instr_index = (x * 2) + y
-            print('instrument index:', instr_index)
-            print('sample at intr_index:', samples[instr_index])
-            mixer.play(samples[instr_index], voice=0) # play sound of button pressed
+        for btn in pressed - current_press:
+            print("Pressed down", btn)
+            row, col = btn[0], btn[1] # unwrap coordinates of pressed button
+            if row in INSTR_ROWS:
+                instr_idx = get_instr_index(row, col)
+                print('instrument index:', instr_idx)
+                # play sound of button pressed
+                mixer.play(samples[instr_idx], voice=0) 
+            elif row in SEQUENCER_ROWS:
+                loop_idx = get_loop_index(row, col)
+                print('want to add instrument:', instr_idx, 'at loop index:', loop_idx)
             # toggle sound of pressed button (i.e. if it was previously enabled -> disable)
             # beatset[y][x] = not beatset[y][x]
             # if beatset[y][x]: # if sound was just enabled
                 # color = DRUM_COLOR[y] # grab appropriate color
             # else: # if sound was just disabled
             #     color = 0 # set color to 0 to turn off the pixel
-            # trellis.pixels[down] = color # change color on the board
+            # trellis.pixels[btn] = color # change color on the board
         current_press = pressed # update current_press
 
