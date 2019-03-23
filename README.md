@@ -16,4 +16,13 @@ https://github.com/adafruit/Adafruit-Sound-Samples
 https://freesound.org/
 
 ## Status
-Currently in initial phases of development. More will be here soon.
+MVP Complete
+
+### Goals to improve UI/UX:
+- allow user to disable instrument by double clicking on it
+- rename sound files and cherry pick best ones 
+- color code instruments
+- when an instrument is selected, it is a brighter on the keypad below
+- when the loop plays, highlight instruments that are playing on bottom rows
+- add play/pause button
+- add page-left/page-right"
