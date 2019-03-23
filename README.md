@@ -2,6 +2,7 @@
 Soundboard uses Python to turn Adafruit's Neotrellis M4 into a loop station.
 
 ## Running this locally
+- Buy a [NeoTrellis from Adafruit](https://www.adafruit.com/product/4020) <-- required hardware
 - Connect the Neotrellis M4 to your computer
 - It will run code.py in the root folder automatically.
 
