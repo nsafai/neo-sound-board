@@ -2,6 +2,7 @@
 Soundboard uses Python to turn Adafruit's Neotrellis M4 into a loop station.
 
 ## Running this locally
+- Buy a [NeoTrellis from Adafruit](https://www.adafruit.com/product/4020) <-- required hardware
 - Connect the Neotrellis M4 to your computer
 - It will run code.py in the root folder automatically.
 
@@ -16,4 +17,13 @@ https://github.com/adafruit/Adafruit-Sound-Samples
 https://freesound.org/
 
 ## Status
-Currently in initial phases of development. More will be here soon.
+MVP Complete
+
+### Goals to improve UI/UX:
+- allow user to disable instrument by double clicking on it
+- rename sound files and cherry pick best ones 
+- color code instruments
+- when an instrument is selected, it is a brighter on the keypad below
+- when the loop plays, highlight instruments that are playing on bottom rows
+- add play/pause button
+- add page-left/page-right"
