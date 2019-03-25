@@ -24,7 +24,7 @@ SEQUENCER_ROWS = [2, 3] # we'll use top 2 rows for insruments
 NUM_SEQ_ROWS = len(SEQUENCER_ROWS)
 instr_idx = 0 # default to first instrument
 
-def get_instr_index(row, col): 
+def get_instr_index(row, col):
     # returns index of instrument pressed
     return col * NUM_INSTR_ROWS - INSTR_ROWS[0] + row
 
@@ -39,13 +39,13 @@ def get_loop_index(row, col):
 #################### IMPORT SOUNDS ####################
 # Sounds must all (1) have the same sample rate and (2) be mono or stereo (no mix-n-match!)
 SOUNDS = []
-# go through every file in /sounds directory
-for file in os.listdir("/sounds"):
+# go through every file in /sounds directory (sorted alphabetically)
+for file in sorted(os.listdir("/sounds")):
     # get all .wav files but ignore files that start with "."
     if file.endswith(".wav") and not file.startswith("."):
         # append those to SOUNDS
         SOUNDS.append("/sounds/" + str(file))
-# print(SOUNDS)
+print(SOUNDS)
 num_sounds = len(SOUNDS)
 
 # Parse the first file to figure out what format its in
@@ -67,7 +67,7 @@ audio.play(mixer)
 
 
 #################### COLOR SETUP ####################
-DRUM_COLOR = []            
+DRUM_COLOR = []
 # the color for the sweeping ticker
 TICKER_COLOR = (255, 165, 0)
 
@@ -86,9 +86,13 @@ cur_idx = 0
 # leaving 16 buttons for sounds
 for col in range(8): # across 8 columns
     for row in range(2): # across 2 rows
-        # generate a random color (TODO: make this smarter)
-        random_color = random.randint(cur_idx, 0xFFFFFF)
-        DRUM_COLOR.append(random_color) # append drum color
+        # generate a random color from instrument name
+        instr_fam = SOUNDS[cur_idx][:-6] # have to chop off 6 chars, ie "XX.wav"
+        instr_num = SOUNDS[cur_idx][-6:-4] # last 2 digits before ".wav" extension
+        instr_fam_color = abs(hash(instr_fam)) # hash the instrument family, for ex: "bass_"
+        # starting at HEX Value for black 0x000000, generate a color from instr fam & num
+        instr_color = 0x000000 + hash(instr_fam) * 100000 + int(instr_num)**5 
+        DRUM_COLOR.append(instr_color) # append drum color
         trellis.pixels[(row, col)] = DRUM_COLOR[cur_idx] # assign color on trellis
         wave_file = open(SOUNDS[cur_idx], "rb") # open the corresponding wave file
         sample = audioio.WaveFile(wave_file) # convert wave file
@@ -136,7 +140,7 @@ while playing == True:
     # handle button presses while we're waiting for the next tempo beat
     while time.monotonic() - stamp < 60/tempo:
         # grab currently pressed buttons
-        pressed = set(trellis.pressed_keys) 
+        pressed = set(trellis.pressed_keys)
         # for every button pressed in last beat:
         for btn in pressed - current_press:
             # print("Pressed down", btn)
@@ -158,7 +162,7 @@ while playing == True:
                     trellis.pixels[(row, col)] = color
             elif row in SEQUENCER_ROWS:
                 loop_idx = get_loop_index(row, col) # get loop index from button coordinates
-                # toggle instrument at loop_idx 
+                # toggle instrument at loop_idx
                 # e.g. if it was previously enabled -> disable & vice-versa
                 sequencer[instr_idx][loop_idx] ^= True
                 if sequencer[instr_idx][loop_idx]: # if sound was just enabled
@@ -167,4 +171,3 @@ while playing == True:
                     color = 0 # set color to 0 to turn off the pixel
                 trellis.pixels[(row, col)] = color # change color on the board
         current_press = pressed # update current_press
-
