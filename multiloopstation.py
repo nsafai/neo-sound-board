@@ -1,14 +1,19 @@
-import math
-import time
+# standard library
 import array
-import board
-import busio
-import audioio
-import adafruit_trellis_express
-import adafruit_adxl34x
-from wave_parsing import parse_wav
+import math
 import os
 import random
+import time
+
+# custom libraries
+import adafruit_trellis_express
+import adafruit_adxl34x
+import audioio
+import board
+import busio
+
+# custom modules
+from wave_parsing import parse_wav
 
 
 ################### KEYPAD SETUP ####################
@@ -39,8 +44,8 @@ def get_loop_index(row, col):
 #################### IMPORT SOUNDS ####################
 # Sounds must all (1) have the same sample rate and (2) be mono or stereo (no mix-n-match!)
 SOUNDS = []
-# go through every file in /sounds directory (sorted alphabetically)
-for file in sorted(os.listdir("/sounds")):
+# go through every file in /sounds directory
+for file in os.listdir("/sounds"):
     # get all .wav files but ignore files that start with "."
     if file.endswith(".wav") and not file.startswith("."):
         # append those to SOUNDS
@@ -50,7 +55,6 @@ num_sounds = len(SOUNDS)
 
 # Parse the first file to figure out what format its in
 wave_format = parse_wav(SOUNDS[0])
-# print('waveformat: ', wave_format)
 
 # Audio playback object - we'll go with either mono or stereo depending on
 # what we see in the first file
@@ -83,15 +87,15 @@ sequencer = [] # will keep track of all instrument loops
 ############# ASSIGN COLORS/SOUNDS TO KEYS ###############
 samples = []
 cur_idx = 0
-# leaving 16 buttons for sounds
+
+# allocating 16 buttons for sounds
 for col in range(8): # across 8 columns
     for row in range(2): # across 2 rows
-        # generate a random color from instrument name
-        instr_fam = SOUNDS[cur_idx][:-6] # have to chop off 6 chars, ie "XX.wav"
-        instr_num = SOUNDS[cur_idx][-6:-4] # last 2 digits before ".wav" extension
-        instr_fam_color = abs(hash(instr_fam)) # hash the instrument family, for ex: "bass_"
-        # starting at HEX Value for black 0x000000, generate a color from instr fam & num
-        instr_color = 0x000000 + hash(instr_fam) * 100000 + int(instr_num)**5 
+        # generate a random color
+        instr_fam = SOUNDS[cur_idx][8:-6] # extract __ in sounds/"__"XX.wav
+        instr_num = SOUNDS[cur_idx][-6:-4] # extract XX in sounds/"__"XX.wav
+        instr_fam_num = abs(hash(instr_fam)) # hash instr fam
+        instr_color = 0x000000 + instr_fam_num * 400000 + int(instr_num) * 2500
         DRUM_COLOR.append(instr_color) # append drum color
         trellis.pixels[(row, col)] = DRUM_COLOR[cur_idx] # assign color on trellis
         wave_file = open(SOUNDS[cur_idx], "rb") # open the corresponding wave file
@@ -99,6 +103,8 @@ for col in range(8): # across 8 columns
         samples.append(sample) # append to list of sound samples
         sequencer.append([0] * 16) # starting state of sequencer for all instruments
         cur_idx += 1 # iterate cur_idx
+
+# play a sample when finished with initial load
 random_sample = random.choice(samples)
 mixer.play(random_sample) # play random sample
 
@@ -126,7 +132,6 @@ def move_ticker():
     for i in range(len(sequencer)): # for every instrument index in sequencer
         if sequencer[i][current_step]: # if instrument enabled at that step
             color = DRUM_COLOR[i] // 2 # show a slightly different ticker color
-            print('that instrument is supposed to be played rn')
             mixer.play(samples[i], voice=i) # play the instrument's sound
     trellis.pixels[(row, col)] = color # light up the pixel
 
@@ -150,14 +155,13 @@ while playing == True:
                 mixer.play(samples[instr_idx], voice=instr_idx) # play sound of button pressed
                 # light up button at all indexes where instrument appears
                 for step, status in enumerate(sequencer[instr_idx]):
-                    print(step, status)
+                    # print('step',step,'status',status)
                     # top row (row 3) for first 8 counts, second row after
                     row = 3 if step < 8 else 2
                     # step ranges from 0-15 but col can only be equal to 0-7, so we subtract 8
                     col = step if step < 8 else step - 8
                     color = 0 # default color
                     if status: # if instrument enabled at that count/step
-                        print('instrument is enabled at index', step)
                         color = DRUM_COLOR[instr_idx] # set color to instrument color
                     trellis.pixels[(row, col)] = color
             elif row in SEQUENCER_ROWS:
