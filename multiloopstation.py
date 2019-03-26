@@ -36,8 +36,7 @@ def get_loop_index(row, col):
 
 # BOARD CLASS
 class Board:
-
-    def __init__(self, type = adafruit_trellis_express.TrellisM4Express(rotation=90)):
+    def __init__(self, type=adafruit_trellis_express.TrellisM4Express(rotation=90)):
         print('1')
         self.type = type # Our keypad + neopixel driver
         # Init keypad with preset settings
@@ -69,7 +68,6 @@ class Board:
         # Setup Beat
         self.tempo = 180  # Starting BPM
         self.loop_length = 16
-        self.playing = True
         self.current_step = 15 # we actually start on the last step since we increment first
         self.current_press = set() # currently pressed buttons
         self.loops = [] # will keep track of all instrument loops
@@ -79,6 +77,8 @@ class Board:
         random_sample = random.choice(self.samples)
         self.mixer.play(random_sample) # play random sample
         self.pressed_keys = []
+        # let loop run
+        self.playing = True
 
     ################## PIXEL  ####################
     def setBrightness(self, percentFloat):
@@ -196,11 +196,14 @@ class Board:
                         self.pixels[(row, col)] = color # change color on the board
                 self.current_press = pressed # update current_press
 
-def main():
-    board = Board()  # setup everything to be ready
-    board.loop()
+# def main():
+#     board = Board()  # setup everything to be ready
+#     board.loop()
 
 
-if __name__ == "__main__":
-    # pass  # to avoid calling broken code above
-    main()  # enable after refactor
+# if __name__ == "__main__":
+#     # pass  # to avoid calling broken code above
+#     main()  # enable after refactor
+
+board = Board()  # setup everything to be ready
+board.loop()
