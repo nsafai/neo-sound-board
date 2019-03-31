@@ -47,10 +47,11 @@ class Board:
         # Setup Sounds
         self.num_sounds = 0
         self.sounds = []
-        self.find_wav_files("/sounds")
+        self.sounds = self.find_wav_files("/sounds")
         self.instr_idx = 0 # default to first instrument
         print('3')
         # Parse 1st file to figure out what format its in
+        print('self.sounds is:', self.sounds)
         self.wave_format = parse_wav(self.sounds[0])
         if self.wave_format['channels'] == 1:
             self.audio = audioio.AudioOut(board.A1)
@@ -58,9 +59,11 @@ class Board:
             self.audio = audioio.AudioOut(board.A1, right_channel=board.A0)
         else:
             raise RuntimeError("All sound files must be either mono or stereo!")
+        print('4')
         self.mixer = audioio.Mixer(voice_count=self.num_sounds, sample_rate=self.wave_format['sample_rate'],
                                 channel_count=self.wave_format['channels'],
                                 bits_per_sample=16, samples_signed=True)
+        print('5')
         self.audio.play(self.mixer)
         # Setup Colors
         self.drum_colors = []
@@ -71,12 +74,14 @@ class Board:
         self.current_step = 15 # we actually start on the last step since we increment first
         self.current_press = set() # currently pressed buttons
         self.loops = [] # will keep track of all instrument loops
+        print('6')
         # Assign colors and sounds to keys
         self.samples = self.assign_samples()
         # Play a sample when finished with initial load
         random_sample = random.choice(self.samples)
         self.mixer.play(random_sample) # play random sample
         self.pressed_keys = []
+        print('7')
         # let loop run
         self.playing = True
 
@@ -98,7 +103,7 @@ class Board:
             # get all .wav files but ignore files that start with "."
             if file.endswith(".wav") and not file.startswith("."):
                 # append those to SOUNDS
-                self.sounds.append(folderUrl + str(file))
+                self.sounds.append(folderUrl + "/" + str(file))
         print(self.sounds)
         self.num_sounds = len(self.sounds)
     
