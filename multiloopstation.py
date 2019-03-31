@@ -19,7 +19,7 @@ from wave_parsing import parse_wav
 ################### KEYPAD SETUP ####################
 # Init keypad with preset settings
 trellis = adafruit_trellis_express.TrellisM4Express(rotation=90) # Our keypad + neopixel driver
-trellis.pixels._neopixel.brightness = 0.05
+trellis.pixels._neopixel.brightness = 0.1
 # Clear all pixels
 trellis.pixels._neopixel.fill(0)
 trellis.pixels._neopixel.show()
@@ -95,7 +95,7 @@ for col in range(8): # across 8 columns
         instr_fam = SOUNDS[cur_idx][8:-6] # extract __ in sounds/"__"XX.wav
         instr_num = SOUNDS[cur_idx][-6:-4] # extract XX in sounds/"__"XX.wav
         instr_fam_num = abs(hash(instr_fam)) # hash instr fam
-        instr_color = 0x000000 + instr_fam_num * 400000 + int(instr_num) * 2500
+        instr_color = 0x000000 + instr_fam_num * 400000 + int(instr_num) * 3500
         DRUM_COLOR.append(instr_color) # append drum color
         trellis.pixels[(row, col)] = DRUM_COLOR[cur_idx] # assign color on trellis
         wave_file = open(SOUNDS[cur_idx], "rb") # open the corresponding wave file
