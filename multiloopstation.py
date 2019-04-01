@@ -37,19 +37,16 @@ def get_loop_index(row, col):
 # BOARD CLASS
 class Board:
     def __init__(self, type=adafruit_trellis_express.TrellisM4Express(rotation=90)):
-        print('1')
         self.type = type # Our keypad + neopixel driver
         # Init keypad with preset settings
         self.pixels = self.type.pixels
         self.setBrightness(0.05)
         self.clearPixels()
-        print('2')
         # Setup Sounds
         self.num_sounds = 0
         self.sounds = []
         self.find_wav_files("/sounds")
         self.instr_idx = 0 # default to first instrument
-        print('3')
         # Parse 1st file to figure out what format its in
         print('self.sounds is:', self.sounds)
         self.wave_format = parse_wav(self.sounds[0])
@@ -59,11 +56,9 @@ class Board:
             self.audio = audioio.AudioOut(board.A1, right_channel=board.A0)
         else:
             raise RuntimeError("All sound files must be either mono or stereo!")
-        print('4')
         self.mixer = audioio.Mixer(voice_count=self.num_sounds, sample_rate=self.wave_format['sample_rate'],
                                 channel_count=self.wave_format['channels'],
                                 bits_per_sample=16, samples_signed=True)
-        print('5')
         self.audio.play(self.mixer)
         # Setup Colors
         self.drum_colors = []
@@ -74,14 +69,12 @@ class Board:
         self.current_step = 15 # we actually start on the last step since we increment first
         self.current_press = set() # currently pressed buttons
         self.loops = [] # will keep track of all instrument loops
-        print('6')
         # Assign colors and sounds to keys
         self.samples = self.assign_samples()
         # Play a sample when finished with initial load
         random_sample = random.choice(self.samples)
         self.mixer.play(random_sample) # play random sample
         self.pressed_keys = []
-        print('7')
         # let loop run
         self.playing = True
 
@@ -169,8 +162,8 @@ class Board:
 
             # handle button presses while we're waiting for the next tempo beat
             while (time.monotonic() - stamp) < (60 / self.tempo):
-                # grab currently pressed buttons
-                pressed = set(self.pressed_keys)
+                # grab currently pressed buttons from self.type (=board type)
+                pressed = set(self.type.pressed_keys)
                 # for every button pressed in last beat:
                 for btn in pressed - self.current_press:
                     # print("Pressed down", btn)
@@ -201,14 +194,11 @@ class Board:
                         self.pixels[(row, col)] = color # change color on the board
                 self.current_press = pressed # update current_press
 
-# def main():
-#     board = Board()  # setup everything to be ready
-#     board.loop()
+def main():
+    board = Board()  # setup everything to be ready
+    board.loop()
 
 
-# if __name__ == "__main__":
-#     # pass  # to avoid calling broken code above
-#     main()  # enable after refactor
-
-board = Board()  # setup everything to be ready
-board.loop()
+if __name__ == "__main__":
+    # pass  # to avoid calling broken code above
+    main()  # enable after refactor
