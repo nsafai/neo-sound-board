@@ -47,7 +47,7 @@ class Board:
         # Setup Sounds
         self.num_sounds = 0
         self.sounds = []
-        self.sounds = self.find_wav_files("/sounds")
+        self.find_wav_files("/sounds")
         self.instr_idx = 0 # default to first instrument
         print('3')
         # Parse 1st file to figure out what format its in
@@ -126,7 +126,7 @@ class Board:
                     self.pixels[(row, col)] = self.drum_colors[cur_idx] # assign color on trellis
                     wave_file = open(self.sounds[cur_idx], "rb") # open the corresponding wave file
                     sample = audioio.WaveFile(wave_file) # convert wave file
-                    self.samples.append(sample) # append to list of sound samples
+                    samples.append(sample) # append to list of sound samples
                     self.loops.append([0] * self.loop_length) # starting state of loops for all instruments
                     # cur_idx += 1 # iterate cur_idx
         return samples
