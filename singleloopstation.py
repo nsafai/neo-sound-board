@@ -15,7 +15,7 @@ ENABLE_TILT_TEMPO = True
 
 # You get 4 voices, they must all have the same sample rate and must
 # all be mono or stereo (no mix-n-match!)
-VOICES = ["voice01.wav", "voice02.wav", "voice03.wav", "voice04.wav"]
+VOICES = ["sounds/s/voice01.wav", "sounds/s/voice02.wav", "sounds/s/voice03.wav", "sounds/s/voice04.wav"]
 
 # four colors for the 4 voices, using 0 or 255 only will reduce buzz
 DRUM_COLOR = ((0, 255, 255),

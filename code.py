@@ -2,5 +2,9 @@
 
 if __name__ == '__main__':
     # import singleloopstation
-    import multiloopstation
+
+    from multiloopstation import Board
+    board = Board()
+    board.loop()
+    
     # import pause
