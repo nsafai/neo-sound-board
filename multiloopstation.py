@@ -6,7 +6,9 @@ import random
 import time
 
 # custom libraries
-import adafruit_trellis_express
+from lib import adafruit_trellis_express
+
+# hidden libraries on hardware
 import adafruit_adxl34x
 import audioio
 import board
