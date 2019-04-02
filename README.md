@@ -19,11 +19,16 @@ https://freesound.org/
 ## Status
 MVP Complete
 
-### Goals to improve UI/UX:
-- allow user to disable instrument by double clicking on it
-- rename sound files and cherry pick best ones 
-- color code instruments
-- when an instrument is selected, it is a brighter on the keypad below
-- when the loop plays, highlight instruments that are playing on bottom rows
-- add play/pause button
-- add page-left/page-right"
+### Todos to improve UI/UX:
+- [x] rename sound files and cherry pick best ones 
+- [x] color code instruments
+- [] when an instrument is selected, it is a brighter on the keypad below
+- [] when the loop plays, highlight instruments that are playing on bottom rows
+- [] allow user to disable instrument by double clicking on it
+- [] add play/pause button
+- [] add page-left/page-right
+
+### Other ideas:
+- [] ability to save and export loops
+- [] pair with website or touchscreen
+- [] "Live" mode

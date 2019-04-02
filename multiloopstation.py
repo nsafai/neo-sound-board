@@ -83,7 +83,7 @@ class Board:
         # let loop run
         self.playing = True
 
-    ################## PIXEL  ####################
+    ################## PIXELS ####################
     def setBrightness(self, percentFloat):
         # set brightness to number between 0.0-1.0
         self.pixels._neopixel.brightness = percentFloat
@@ -93,7 +93,7 @@ class Board:
         self.pixels._neopixel.fill(0)
         self.pixels._neopixel.show()
 
-    ################## SOUND ####################
+    ################## SOUNDS ####################
     def find_wav_files(self, folderUrl):
         # Sounds must all (1) have the same sample rate and (2) be mono or stereo (no mix-n-match!)
         # go through every file in /sounds directory
