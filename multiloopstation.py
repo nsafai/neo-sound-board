@@ -64,7 +64,6 @@ class Board:
         self.find_wav_files("/sounds")
         self.instr_idx = 0 # default to first instrument
         # Parse 1st file to figure out what format its in
-        print('self.instrument_urls is:', self.instrument_urls)
         self.wave_format = parse_wav(self.instrument_urls[0])
         if self.wave_format['channels'] == 1:
             self.audio = audioio.AudioOut(board.A1)
@@ -78,7 +77,8 @@ class Board:
         self.audio.play(self.mixer)
         # Setup Colors
         self.instrument_colors = []
-        self.assign_colors() # assign a unique color for every instrument, starting a
+        self.assign_colors() # assign a unique color for every instrument
+        self.light_keys()
         # Setup Beat
         self.tempo = 180  # Starting BPM
         self.loop_length = 16
@@ -129,24 +129,28 @@ class Board:
         return samples
 
     # set button to color at instr_index in instrument_colors array
-    def assign_colors(self, starting_instr=0):
-        max_instr_at_once = NUM_INSTR_ROWS * NUM_COLUMNS
-        for instr_idx in range(starting_instr, max_instr_at_once):
-            # get row and column
-            row = (instr_idx - starting_instr) % 2
-            col = (instr_idx - starting_instr) // 2
+    def assign_colors(self):
+        for instrument_url in self.instrument_urls:
             # get instrument_family from prefix of file name (e.g. __ in sounds/__XX.wav)
-            instr_fam = self.instrument_urls[instr_idx][8:-6] 
+            instr_fam = instrument_url[8:-6]
+            print(instr_fam)
             # get instrument_number from filename w/o extension (e.g. XX in sounds/__XX.wav)
-            instr_num = self.instrument_urls[instr_idx][-6:-4]
+            instr_num = instrument_url[-6:-4]
+            print(instr_num)
             # lookup instrument family color in a dictionary (ie bass is blue, cymbal is yellow)
             instr_fam_color = INSTR_FAMILY_COLORS[instr_fam]
             # use instrument number to get unique color within range of family color
             instr_color = instr_fam_color + int(instr_num) * DIFF_BTWN_COLORS
             # save these colors to the list of colors
             self.instrument_colors.append(instr_color) # append drum color
+    
+    def light_keys(self, starting_instr=0):
+        max_instr_at_once = NUM_INSTR_ROWS * NUM_COLUMNS
+        for instr_idx in range(starting_instr, max_instr_at_once):
+            # get row and column
+            row = (instr_idx - starting_instr) % 2
+            col = (instr_idx - starting_instr) // 2
             self.pixels[(row, col)] = self.instrument_colors[instr_idx] # assign color on trellis
-
 
     ################## TICKER ####################
     def redraw_after_ticker(self):
