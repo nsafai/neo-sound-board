@@ -58,27 +58,20 @@ class Board:
         self.pixels = self.type.pixels
         self.setBrightness(0.05)
         self.clearPixels()
-        # Setup Sounds
-        self.num_sounds = 0
-        self.instrument_urls = []
-        self.find_wav_files("/sounds")
+        # Setup instruments
         self.instr_idx = 0 # default to first instrument
-        # Parse 1st file to figure out what format its in
-        self.wave_format = parse_wav(self.instrument_urls[0])
-        if self.wave_format['channels'] == 1:
-            self.audio = audioio.AudioOut(board.A1)
-        elif self.wave_format['channels'] == 2:
-            self.audio = audioio.AudioOut(board.A1, right_channel=board.A0)
-        else:
-            raise RuntimeError("All sound files must be either mono or stereo!")
+        self.instrument_urls = self.find_wav_files("/sounds")
+        self.num_sounds = len(self.instrument_urls)
+        # Setup Sound
+        self.parse_wav_files() # Parse 1st file to figure out what format its in
         self.mixer = audioio.Mixer(voice_count=self.num_sounds, sample_rate=self.wave_format['sample_rate'],
-                                channel_count=self.wave_format['channels'],
-                                bits_per_sample=16, samples_signed=True)
+                                    channel_count=self.wave_format['channels'],
+                                    bits_per_sample=16, samples_signed=True)
         self.audio.play(self.mixer)
         # Setup Colors
         self.instrument_colors = []
         self.assign_colors() # assign a unique color for every instrument
-        self.light_keys()
+        self.color_buttons() # light up the buttons with instrument colors
         # Setup Beat
         self.tempo = 180  # Starting BPM
         self.loop_length = 16
@@ -90,8 +83,8 @@ class Board:
         # Play a sample when finished with initial load
         random_sample = random.choice(self.samples)
         self.mixer.play(random_sample) # play random sample
-        self.pressed_keys = []
-        # let loop run
+        self.pressed_keys = [] # keeps track of buttons pressed (updated regularly)
+        # Run the loop
         self.playing = True
 
     ################## PIXELS ####################
@@ -106,15 +99,24 @@ class Board:
 
     ################## SOUNDS ####################
     def find_wav_files(self, folderUrl):
+        instrument_urls = [] # starts blank
         # Sounds must all (1) have the same sample rate and (2) be mono or stereo (no mix-n-match!)
         # go through every file in /sounds directory
         for file in sorted(os.listdir(folderUrl)):
             # get all .wav files but ignore files that start with "."
             if file.endswith(".wav") and not file.startswith("."):
                 # append those to SOUNDS
-                self.instrument_urls.append(folderUrl + "/" + str(file))
-        print(self.instrument_urls)
-        self.num_sounds = len(self.instrument_urls)
+                instrument_urls.append(folderUrl + "/" + str(file))
+        return instrument_urls
+    
+    def parse_wav_files(self):
+        self.wave_format = parse_wav(self.instrument_urls[0])
+        if self.wave_format['channels'] == 1:
+            self.audio = audioio.AudioOut(board.A1)
+        elif self.wave_format['channels'] == 2:
+            self.audio = audioio.AudioOut(board.A1, right_channel=board.A0)
+        else:
+            raise RuntimeError("All sound files must be either mono or stereo!")
 
     # assign unique instrument colors AND load instruments into memory
     def load_instruments(self):
@@ -144,7 +146,7 @@ class Board:
             # save these colors to the list of colors
             self.instrument_colors.append(instr_color) # append drum color
     
-    def light_keys(self, starting_instr=0):
+    def color_buttons(self, starting_instr=0):
         max_instr_at_once = NUM_INSTR_ROWS * NUM_COLUMNS
         for instr_idx in range(starting_instr, max_instr_at_once):
             # get row and column
