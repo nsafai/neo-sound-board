@@ -2,3 +2,6 @@
 .*.wav
 .Trashes
 .metadata_never_index
+.TemporaryItems
+.fseventsd
+System\ Volume\ Information
